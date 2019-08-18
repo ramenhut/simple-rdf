@@ -19,9 +19,9 @@ Running the program (on Windows) without any parameters will display the followi
 
 ```
 Usage: simple-rdf-x64.exe [options]
-  --train [output forest filename]					Generates a forest based on the MNIST dataset.
-  --classify [forest filename] [image filename]		Classifies a bitmap (.bmp) image.
-  --verify [input forest filename]					Tests the accuracy of a forest against the MNIST test set.
+  --train  [output forest filename]                     Generates a forest based on the MNIST dataset.
+  --classify [forest filename] [image filename]         Classifies a bitmap image and reports the type.
+  --verify [input forest filename]                      Tests the accuracy of a forest against the MNIST test set.
 ```
 *Training mode* will load the complete MNIST training set and rely on pre-defined parameters specified in the source code to train a forest. Once complete, the forest will be saved to **the filename that you specify** for future use.
 
