@@ -43,9 +43,11 @@ uint64 GetElapsedTimeMs(uint64 from_time) {
 
 void PrintUsage(const char* programName) {
   cout << "Usage: " << programName << " [options]" << endl;
-  cout << "  --train  [output forest filename]\t\t"
+  cout << "  --train  [output forest filename]\t\t\t"
        << "Generates a forest based on the MNIST dataset." << endl;
-  cout << "  --verify [input forest filename] \t\tTests the accuracy of a "
+  cout << "  --classify [forest filename] [image filename]\t\t"
+       << "Classifies a bitmap image and reports the type." << endl;
+  cout << "  --verify [input forest filename] \t\t\tTests the accuracy of a "
           "forest against the "
        << "MNIST test set." << endl;
 }
@@ -74,6 +76,8 @@ void ExecuteTraining(const string& output_filename) {
          << endl;
     return;
   }
+
+  cout << "Loading training data..." << endl;
 
   if (!LoadImageSet(mnist_training_images, mnist_training_labels,
                     &training_data, &label_count, &error)) {
@@ -106,6 +110,60 @@ void ExecuteTraining(const string& output_filename) {
   }
 }
 
+void ExecuteClassification(const string& forest_filename,
+                           const string& image_filename) {
+  string error;
+  Image classify_image;
+  DecisionForest forest;
+
+  if (image_filename.empty()) {
+    cout << "You must specify a valid bitmap (.bmp) image to load for "
+            "classification."
+         << endl;
+    return;
+  }
+
+  if (forest_filename.empty()) {
+    cout << "You must specify a valid forest to load for classification."
+         << endl;
+    return;
+  }
+
+  cout << "Loading decision forest..." << endl;
+
+  if (!LoadDecisionForest(forest_filename, &forest, &error)) {
+    cout << "Error detected while loading forest from disk: " << error << endl;
+    return;
+  }
+
+  cout << "Loaded forest with the following parameters:" << endl;
+  PrintForestParams(forest.GetForestParams());
+  PrintTreeParams(forest.GetTreeParams());
+
+  if (!LoadBitmapImage8(image_filename, &classify_image, &error)) {
+    cout << "Error detected while loading input image from disk: " << error
+         << endl;
+    return;
+  }
+
+  if (classify_image.width != 28 || classify_image.height != 28) {
+    cout << "Woops! This demo can only classify images that are 28x28 in size."
+         << endl;
+    cout << "Please adjust your input image and try again." << endl;
+    return;
+  }
+
+  uint32 forest_result = forest.Classify(&classify_image, &error);
+
+  if (error.length()) {
+    cout << "Error detected during classify: " << error << endl;
+    return;
+  }
+
+  cout << "Classified input image " << image_filename
+       << " as: " << forest_result << "." << endl;
+}
+
 void ExecuteVerification(const string& input_filename) {
   string error;
   uint32 label_count = 0;
@@ -118,6 +176,8 @@ void ExecuteVerification(const string& input_filename) {
     return;
   }
 
+  cout << "Loading test data..." << endl;
+
   if (!LoadImageSet(mnist_classify_images, mnist_classify_labels,
                     &classify_data, &label_count, &error)) {
     cout << "Error detected during data load: " << error << endl;
@@ -126,12 +186,14 @@ void ExecuteVerification(const string& input_filename) {
 
   cout << "Loaded " << classify_data.size() << " test samples." << endl;
 
+  cout << "Loading decision forest..." << endl;
+
   if (!LoadDecisionForest(input_filename, &forest, &error)) {
     cout << "Error detected while loading forest from disk: " << error << endl;
     return;
   }
 
-  cout << "Loaded foreste with the following parameters:" << endl;
+  cout << "Loaded forest with the following parameters:" << endl;
   PrintForestParams(forest.GetForestParams());
   PrintTreeParams(forest.GetTreeParams());
 
@@ -167,6 +229,15 @@ int main(int argc, char** argv) {
       case 't':
         ExecuteTraining(argv[++i]);
         break;
+      case 'c': {
+        if (argc < 4) {
+          PrintUsage(argv[0]);
+          return 0;
+        }
+        char* forest_filename = argv[++i];
+        char* image_filename = argv[++i];
+        ExecuteClassification(forest_filename, image_filename);
+      } break;
       case 'v':
         ExecuteVerification(argv[++i]);
         break;
