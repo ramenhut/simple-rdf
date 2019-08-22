@@ -95,7 +95,7 @@ bool DecisionForest::Train(const DecisionForestParams& forest_params,
     }
   }
 #else
-  set_seed(GetSystemTimeMs());
+  set_seed(GetTrainingSeed());
   for (uint32 i = 0; i < forest_params_.total_tree_count; i++) {
     DecisionTree* tree = &decision_forest_.at(i);
     if (!tree->Train(tree_params_, training_data, i * train_range, train_count,
